@@ -1,0 +1,28 @@
+################################################################################
+# Use a URL to specify sending a backup to a remote host using a specific 
+# protocol
+# For HTTP, use a URL like:
+# "URL": "http://host:port/path"
+#
+# Use LocalPath to specify where to save the backup on localhost
+# Specify the path on the local host and the list of files that need 
+# to be copied to it like:
+# "LocalPath": "Backup/directory": ["FilePath1", "FilePath2"]
+# 
+# Inside the backup directory, you can specify subdirectories into which 
+# files can be placed. Use a configuration like this:
+# "LocalPath": 
+#   "Backup/directory":
+#     -Subdirectory1: ["FilePath1", "FilePath2"]
+#     -Subdirectory2: ["FilePath1", "FilePath2"]
+#
+################################################################################
+
+"URL": "http://192.168.1.1:9000/test"
+"LocalPath":
+  "global_path":
+    - "micro_path1":
+      - "test_path1_file1"
+      - "test_patj1_file2"  
+    - "micro_path2":
+      - "test_path2_file1"
