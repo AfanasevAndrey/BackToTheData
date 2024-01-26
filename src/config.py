@@ -5,6 +5,7 @@
 """
 from typing import Optional
 import logging
+import os
 
 import yaml
 
@@ -35,12 +36,12 @@ class Config:
         # Обрабатываем возможные ошибки
         except FileNotFoundError:
             logging.error(f"File {path} does not exist")
-            raise FileNotFoundError(
+            raise ConfigException(
                 f"File {path} does not exist"
             )
         except PermissionError:
             logging.error(f"Permission Denied Error: Access is denied to {path}")
-            raise PermissionError(
+            raise ConfigException(
                 f"Permission Denied Error: Access is denied to {path}"
             )
         except Exception as e:
@@ -51,7 +52,8 @@ class Config:
         logging.info(f"Successfull get config from {path}")
         # Устанавливаем полученные значения в поля класса
         self.url = full_config.get("URL", None)
-        self.local_path = full_config.get("LocalPath", None)
+        self.backup_files = full_config.get("LocalPath", None)
+        
         logging.debug(
             f"Resulting configuration: (\n"+
             f"URL: {self.url}\n"+
@@ -59,7 +61,10 @@ class Config:
             f"Remote host: {self.remote_host}\n"+
             f"Remote port: {self.remote_port}\n"+
             f"Remote path: {self.remote_path}\n"+
-            f"Local path to save Backup: {self.local_path})")
+            f"Local path to save Backup: {self.local_path}\n"+
+            f"Files to back with subdirs: {self.backup_files}\n"+
+            ")")
+        
     # Cвойства класса
     @property
     def url(self):
@@ -140,7 +145,6 @@ class Config:
         else:
             self._remote_path = "/"
     
-    #TODO Свойства локального размещения бэкапа
     @property
     def local_path(self):
         """
@@ -149,15 +153,35 @@ class Config:
         return self._local_path
 
     @local_path.setter
-    def local_path(self, path: Optional[str]):
-        if path is not None:
-            self._local_path = path
+    def local_path(self, path: str):
+        self._local_path = os.path.join(path)
+        if not os.path.isabs(self._local_path):
+            logging.error(f"Local path '{self._local_path}' is not absolute path")
+            raise ConfigException(
+                f"Local path '{self._local_path}' is not absolute path"
+            )
+        else:
+            self._validate_local_path(self._local_path)
+
+    @property
+    def backup_files(self):
+        """
+        Файлы, которые нужно скопировать с указанием куда их копировать внутри
+        локальной директории
+        """
+        return self._backup_files
+    
+    @backup_files.setter
+    def backup_files(self, files: Optional[dict]):
+        if files is not None:
+            self._backup_files = files
         else:
             logging.error("Local path to save doesnt exist in config file")
             raise ConfigException(
                 "Local path to save doesnt exist in config file"
             )
-        
+        self.local_path = self._local_path_from_dict(self._backup_files)
+
     # Методы класса
     def _validate_port(self, port: str) -> None:
         """
@@ -169,7 +193,7 @@ class Config:
             int_port = int(port)
         except ValueError:
             logging.error("Invalid port in URL")
-            raise ValueError(
+            raise ConfigException(
                 "Invalid port in URL"
             )
         if int_port not in constants.PORT_RANGE:
@@ -242,4 +266,35 @@ class Config:
             raise ConfigException(
                 f"Incorrect URL: {self.url}"
             )
+    
+    def _local_path_from_dict(self, path_dict: Optional[dict]):
+        """
+        Метод получает из конфиги словарь путей и возвращает оттуда путь к
+        директории, в которой будет храниться бэкап
+        """
+        # Проверяем, что в конфигурации указан только один путь
+        if path_dict is None:
+            return path_dict
         
+        if len(path_dict.keys()) > 1:
+            logging.error("More than one global backup path in config file")
+            raise ConfigException(
+                "More than one global backup path in config file"
+            )
+        else:
+            return list(path_dict.keys())[0]
+        
+    def _validate_local_path(self, path: os.path):
+        """
+        Метод проверяет существование и права пути, где должна быть создана 
+        директория. Если путь существует и есть права на запись, то директория
+        будет создана
+        """
+        if not os.path.exists(path):
+            try:
+                os.mkdir(path=path)
+            except PermissionError:
+                logging.error(f"No permissions to create directory {path}")
+                raise ConfigException(
+                    f"No permissions to create directory {path}"
+                )

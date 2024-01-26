@@ -20,7 +20,7 @@
 
 "URL": "http://192.168.1.1:9000/test"
 "LocalPath":
-  "global_path":
+  "E://scripts/test_dir":
     - "micro_path1":
       - "test_path1_file1"
       - "test_patj1_file2"  
