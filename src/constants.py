@@ -9,3 +9,5 @@ SEND_PROTOCOLS: dict = {
 
 PORT_RANGE = range(65537)
 
+# Возможные значения для типа архива
+COMPRESS_TYPES = {"zip", "tar"}

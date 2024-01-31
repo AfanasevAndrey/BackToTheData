@@ -4,6 +4,13 @@
 # For HTTP, use a URL like:
 # "URL": "http://host:port/path"
 #
+# Use a CompressType to specify the archive type to compress the backup from 
+# LocalPath
+# For zip, use like:
+# "CompressType": "zip"
+# For tar, use like:
+# "CompressType": "tar"
+#
 # Use LocalPath to specify where to save the backup on localhost
 # Specify the path on the local host and the list of files that need 
 # to be copied to it like:
@@ -19,6 +26,7 @@
 ################################################################################
 
 "URL": "http://192.168.1.1:9000/test"
+"CompressType": "zip"
 "LocalPath":
   "E://scripts/test_dir":
     - "micro_path1":

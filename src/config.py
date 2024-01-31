@@ -14,7 +14,13 @@ import constants
 class ConfigException(Exception):
     pass
 
-
+############################################
+############################################
+############################################
+# TODO Добавить аннотацию возвращаемых типов
+############################################
+############################################
+############################################
 class Config:
     """
     Класс для вычитывания конфигурации из *.yaml, конфигурация хранится в полях
@@ -49,11 +55,12 @@ class Config:
             raise ConfigException(
                 f"Unexpected error: {e}"
             )
+        
         logging.info(f"Successfull get config from {path}")
         # Устанавливаем полученные значения в поля класса
         self.url = full_config.get("URL", None)
         self.backup_files = full_config.get("LocalPath", None)
-        
+        self.compress_type = full_config.get("CompressType", None)
         logging.debug(
             f"Resulting configuration: (\n"+
             f"URL: {self.url}\n"+
@@ -265,7 +272,6 @@ class Config:
             logging.error(f"Incorrect URL: {self.url}")
             raise ConfigException(
                 f"Incorrect URL: {self.url}"
-            )
     
     def _local_path_from_dict(self, path_dict: Optional[dict]):
         """
