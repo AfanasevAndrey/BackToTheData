@@ -49,11 +49,12 @@ class Config:
             raise ConfigException(
                 f"Unexpected error: {e}"
             )
+        
         logging.info(f"Successfull get config from {path}")
         # Устанавливаем полученные значения в поля класса
         self.url = full_config.get("URL", None)
         self.backup_files = full_config.get("LocalPath", None)
-        
+        self.compress_type = full_config.get("CompressType", None)
         logging.debug(
             f"Resulting configuration: (\n"+
             f"URL: {self.url}\n"+
@@ -61,20 +62,21 @@ class Config:
             f"Remote host: {self.remote_host}\n"+
             f"Remote port: {self.remote_port}\n"+
             f"Remote path: {self.remote_path}\n"+
+            f"Compress type: {self.compress_type}\n"+
             f"Local path to save Backup: {self.local_path}\n"+
             f"Files to back with subdirs: {self.backup_files}\n"+
             ")")
         
     # Cвойства класса
     @property
-    def url(self):
+    def url(self) -> Optional[str]:
         """
         Ссылка для отправки бэкапа на удаленный хост.
         """
         return self._url
     
     @url.setter
-    def url(self, url: Optional[str]):
+    def url(self, url: Optional[str]) -> None:
         if url is not None and url != "":
             self._url = url
             self._parse_url()
@@ -86,39 +88,39 @@ class Config:
             self.remote_path = None
 
     @property
-    def send_proto(self):
+    def send_proto(self) -> Optional[str]:
         """
         Протокол для отправки бэкапа на удаленный хост.
         """
         return self._send_proto
 
     @send_proto.setter
-    def send_proto(self, proto: Optional[str]):
+    def send_proto(self, proto: Optional[str]) -> None:
         if proto is not None:
             #Валидируем протокол
             self._validate_send_proto(proto)
         self._send_proto = proto
     
     @property
-    def remote_host(self):
+    def remote_host(self) -> Optional[str]:
         """
         Удаленный хост, куда будет отправлен бэкап.
         """
         return self._remote_host
     
     @remote_host.setter
-    def remote_host(self, host: Optional[str]):
+    def remote_host(self, host: Optional[str]) -> None:
         self._remote_host = host
     
     @property
-    def remote_port(self):
+    def remote_port(self) -> Optional[str]:
         """
         Порт удаленного хоста, куда будет отправлен бэкап
         """
         return self._remote_port
     
     @remote_port.setter
-    def remote_port(self, port: Optional[str]):
+    def remote_port(self, port: Optional[str]) -> None:
         # Если указан порт, то проверяем его корректность и принимаем
         if port is not None:
             self._validate_port(port)
@@ -130,14 +132,14 @@ class Config:
             self._remote_port = None
 
     @property
-    def remote_path(self):
+    def remote_path(self) -> Optional[str]:
         """
         Путь отправки бэкапа на удаленном хосте
         """
         return self._remote_path
     
     @remote_path.setter
-    def remote_path(self, path: Optional[str]):
+    def remote_path(self, path: Optional[str]) -> None:
         if path is not None:
             self._remote_path = path
         elif self.url is None:
@@ -146,7 +148,7 @@ class Config:
             self._remote_path = "/"
     
     @property
-    def local_path(self):
+    def local_path(self) -> os.path:
         """
         Путь для сохранения бэкапа на локальном хосте
         """
@@ -164,7 +166,7 @@ class Config:
             self._validate_local_path(self._local_path)
 
     @property
-    def backup_files(self):
+    def backup_files(self) -> dict:
         """
         Файлы, которые нужно скопировать с указанием куда их копировать внутри
         локальной директории
@@ -172,7 +174,7 @@ class Config:
         return self._backup_files
     
     @backup_files.setter
-    def backup_files(self, files: Optional[dict]):
+    def backup_files(self, files: Optional[dict]) -> None:
         if files is not None:
             self._backup_files = files
         else:
@@ -182,6 +184,23 @@ class Config:
             )
         self.local_path = self._local_path_from_dict(self._backup_files)
 
+    @property
+    def compress_type(self) -> str:
+        """
+        Тип архива, в который будет собран бэкап
+        """
+        return self._compress_type
+    
+    @compress_type.setter
+    def compress_type(self, type: str) -> None:
+        if type.lower() in constants.COMPRESS_TYPES:
+            self._compress_type = type.lower()
+        else:
+            logging.error(f"Unsupported compress type: {type}")
+            raise ConfigException(
+                f"Unsupported compress type: {type}"
+            )
+        
     # Методы класса
     def _validate_port(self, port: str) -> None:
         """
@@ -208,7 +227,7 @@ class Config:
         """
         return constants.SEND_PROTOCOLS[self.send_proto]
     
-    def _validate_send_proto(self, proto: str):
+    def _validate_send_proto(self, proto: str) -> None:
         """
         Проверяет корректность протокола, если протокол не подерживается, то
         выдает ошибку.
@@ -221,7 +240,7 @@ class Config:
                 f"Unsupported protocol {proto} in URL"
             )
     
-    def _parse_url(self):
+    def _parse_url(self) -> None:
         """
         Парсим переданный URL чтобы получить из нее параметры для отправки
         бэкапа
@@ -266,7 +285,7 @@ class Config:
             raise ConfigException(
                 f"Incorrect URL: {self.url}"
             )
-    
+        
     def _local_path_from_dict(self, path_dict: Optional[dict]):
         """
         Метод получает из конфиги словарь путей и возвращает оттуда путь к
